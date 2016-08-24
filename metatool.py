@@ -75,9 +75,9 @@ class HiveMetastore(object):
     EXECUTORS = 60
 
     @classmethod
-    def listFSRoot(cls):
+    def listFSRoot(cls, config):
         # Create object to operate on hive metastore objects
-        meta = MysqlConnection("hive.cfg")
+        meta = MysqlConnection(config)
         conn = meta.connect()
         with conn.cursor() as cursor:
             cursor.execute("SELECT DB_LOCATION_URI from DBS")
@@ -126,7 +126,7 @@ class HiveMetastore(object):
             print(" DONE")
 
     @classmethod
-    def updateFS(cls, src, dst):
+    def updateFS(cls, src, dst, config):
         """ Update NameNode endpoint
         :param src: Old hdfs/namenode address we want to replace
         :type  src: String
@@ -152,14 +152,16 @@ def main():
                         help='List hive FSRoots')
     parser.add_argument('--updateFS', default=[], nargs=2,
                         help='Update NameNode endpoint in hive metastore')
+    parser.add_argument('-c', '--config', default=None, required=True,
+                        help='Path to config file')
     args = parser.parse_args()
 
     # List all HDFS locations
     if args.listFSRoot:
-        HiveMetastore.listFSRoot()
+        HiveMetastore.listFSRoot(args.config)
     # Build a list of concurrent tasks to be executed by asyncio
     if args.updateFS:
-        HiveMetastore.updateFS(args.updateFS[0], args.updateFS[1])
+        HiveMetastore.updateFS(args.updateFS[0], args.updateFS[1], args.config)
     # Commit all changes to the DB
     # meta.commit()
 
